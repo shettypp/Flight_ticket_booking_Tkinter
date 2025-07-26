@@ -62,3 +62,4 @@ The application uses an SQLite database named `flights.db`. This file will be cr
   * `price`: Total price of the booking (integer)
 
 -----
+<img width="908" height="709" alt="image" src="https://github.com/user-attachments/assets/514c7796-b437-41ce-80ff-da7e92ea2cb8" />
