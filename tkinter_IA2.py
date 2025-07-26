@@ -17,25 +17,54 @@ def add_details(event=None):
     last_name = l_name_entry.get()
     contact_number = contact_entry.get()
     email = email_entry.get()
-    num_adults = adults_entry.get()
-    num_children = children_entry.get()
+    
+    # Handle empty entries for adults and children
+    num_adults_str = adults_entry.get()
+    num_adults = int(num_adults_str) if num_adults_str else 0
+    
+    num_children_str = children_entry.get()
+    num_children = int(num_children_str) if num_children_str else 0
+    
     destination = destination_entry.get()
     date = date_entry.get()
     flight_class = class_var.get()
+    
+    # Check if flight_class is selected before proceeding
+    if not flight_class:
+        messagebox.showerror("Error", "Please select a flight class.")
+        return
+
     av = class_flights[flight_class]
-    flight_number = flight_num_entry.get()
-    price = (av[0] * int(num_adults)) + ((av[0] / 2) * int(num_children))
+    
+    flight_number_str = flight_num_entry.get()
+    
+    # Validate if flight_number is a valid integer
+    try:
+        flight_number = int(flight_number_str)
+    except ValueError:
+        messagebox.showerror("Error", "Flight Number must be an integer.")
+        return
+
+    price = (av[0] * num_adults) + ((av[0] / 2) * num_children)
+    
     bill_text.config(state=tk.NORMAL)
     bill_text.delete('1.0', tk.END)
     bill_text.insert(tk.END, "Billing information:\n")
     bill_text.insert(tk.END, f"First Name: {first_name}\nLast Name: {last_name}\nContact Number: {contact_number}\nEmail: {email}\nNumber of Adults: {num_adults}\nNumber of Children: {num_children}\nDestination City: {destination}\nDate: {date}\nFlight Number: {flight_number}\nTotal Amount: rs{price}")
     bill_text.config(state=tk.DISABLED)
     messagebox.showinfo("Confirmed", f"Flight {flight_number} of {flight_class} is Booked")
-    cur.execute("insert into details values(?, ?, ?, ?, ?, ?)", (first_name, int(contact_number), (int(num_adults) + int(num_children)), destination, int(flight_number), price))
+    
+    cur.execute("insert into details values(?, ?, ?, ?, ?, ?)", (first_name, int(contact_number), (num_adults + num_children), destination, flight_number, price))
     con.commit()
 
 def filter_flights():
     flight_class = class_var.get()
+    
+    # Check if flight_class is selected before proceeding
+    if not flight_class:
+        messagebox.showerror("Error", "Please select a flight class to filter.")
+        return
+
     av = class_flights[flight_class]
     flights_text.config(state=tk.NORMAL)
     flights_text.delete('1.0', tk.END)
@@ -49,8 +78,11 @@ def booked_flights():
     rows = cur.fetchall()
     book_text.config(state=tk.NORMAL)
     book_text.delete('1.0', tk.END)
-    for i in rows:
-        book_text.insert(tk.END, f"Name: {i[0]}\nContact Number: {i[1]}\nTotal passangers: {i[2]}\nDestination: {i[3]}\nFlight Number: {i[4]}\nTotal price: {i[5]}\n---------------\n")
+    if not rows:
+        book_text.insert(tk.END, "No flights booked yet.\n")
+    else:
+        for i in rows:
+            book_text.insert(tk.END, f"Name: {i[0]}\nContact Number: {i[1]}\nTotal passengers: {i[2]}\nDestination: {i[3]}\nFlight Number: {i[4]}\nTotal price: {i[5]}\n---------------\n")
     book_text.config(state=tk.DISABLED)
 
 
@@ -111,10 +143,10 @@ date_label.grid(row=8, column=0)
 date_entry = tk.Entry(details_frame)
 date_entry.grid(row=8, column=1)
 
-flight_num_label = tk.Label(details_frame, text="Flight Number: ")  # Add flight number label
+flight_num_label = tk.Label(details_frame, text="Flight Number: ")
 flight_num_label.grid(row=9, column=0)
 
-flight_num_entry = tk.Entry(details_frame)  # Add entry for flight number
+flight_num_entry = tk.Entry(details_frame)
 flight_num_entry.grid(row=9, column=1)
 
 submit_btn = tk.Button(details_frame, text="Submit", command=add_details)
@@ -126,7 +158,8 @@ filter_frame.grid(row=0, column=1, padx=10, pady=10)
 class_label = tk.Label(filter_frame, text="Class: ")
 class_label.grid(row=0, column=0)
 
-class_var = tk.StringVar() 
+class_var = tk.StringVar(root)  # Initialize with root
+class_var.set("Economy") # Set a default value
 class_dropdown = tk.OptionMenu(filter_frame, class_var, "Economy", "Business", "First Class")
 class_dropdown.grid(row=0, column=1)
 
